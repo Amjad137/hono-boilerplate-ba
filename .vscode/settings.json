@@ -1,0 +1,8 @@
+{
+  "cSpell.words": ["cmdrc", "EASNA", "Hono"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  }
+}
