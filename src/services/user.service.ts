@@ -1,99 +1,52 @@
-import { AUTH_USER_MODEL_NAME } from '@/config/better-auth';
-import { getMongoDb } from '@/config/db.config';
+// user.service.ts
+import type { UpdateFilter, WithId } from 'mongodb';
+import type { IUser } from '@/models/auth.models';
+import type { IUserQuery } from '@/validators/user.validator';
+import { ERROR_MESSAGES } from '@/constants/error.constants';
+import NotFoundException from '@/exceptions/not-found.exception';
+import { userRepository } from '@/Repositories/user.repository';
 import { USER_ENTITY_STATUS } from '@/constants/db.constants';
-import { SYSTEM_ROLE } from '@/constants/user.constants';
-import { IUserProfile, UserProfile, UserProfileModel } from '@/models/user.model';
-import { CommonDatabaseService } from './common-database.service';
-import { FilterQuery, Types } from 'mongoose';
 
-type AuthUserRecord = {
-  _id: Types.ObjectId;
-  role?: SYSTEM_ROLE;
-};
+export class UserService {
+  // Service speaks domain language — no MongoDB types, no filter construction
+  public async getAllUsers(query: IUserQuery) {
+    const {
+      limit = 10,
+      skip = 0,
+      search_key,
+      sort_by = 'createdAt',
+      sort_order,
+      emailVerified,
+      banned,
+      role
+    } = query;
 
-export class UserService extends CommonDatabaseService<IUserProfile, UserProfileModel> {
-  constructor() {
-    super(UserProfile);
+    return userRepository.search(
+      { search_key, emailVerified, banned, role },
+      { limit, skip, sort_by, sort_order }
+    );
   }
 
-  public async findByAuthUserId(authUserId: string): Promise<IUserProfile | null> {
-    return this.model.findOne({ authUserId });
+  public async countUsers(banned?: boolean, status?: USER_ENTITY_STATUS) {
+    return userRepository.countByBanned(banned);
   }
 
-  public async authUserExists(authUserId: string): Promise<boolean> {
-    if (!Types.ObjectId.isValid(authUserId)) {
-      return false;
-    }
-    const authUser = await getMongoDb()
-      .collection<AuthUserRecord>(AUTH_USER_MODEL_NAME)
-      .findOne({ _id: new Types.ObjectId(authUserId) }, { projection: { _id: 1 } });
-
-    return !!authUser;
+  public async findUserById(id: string): Promise<WithId<IUser>> {
+    const user = await userRepository.findById(id);
+    if (!user) throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+    return user;
   }
 
-  public async findAuthUserIdsByRole(role: SYSTEM_ROLE): Promise<string[]> {
-    const authUsers = await getMongoDb()
-      .collection<AuthUserRecord>(AUTH_USER_MODEL_NAME)
-      .find({ role }, { projection: { _id: 1 } })
-      .toArray();
-
-    return authUsers.map((authUser) => authUser._id.toString());
+  public async findUserByEmail(email: string): Promise<WithId<IUser>> {
+    const user = await userRepository.findByEmail(email);
+    if (!user) throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+    return user;
   }
 
-  public async updateAuthUserRole(authUserId: string, role: SYSTEM_ROLE): Promise<boolean> {
-    if (!Types.ObjectId.isValid(authUserId)) {
-      return false;
-    }
-
-    const result = await getMongoDb()
-      .collection<AuthUserRecord>(AUTH_USER_MODEL_NAME)
-      .updateOne({ _id: new Types.ObjectId(authUserId) }, { $set: { role } });
-
-    return result.matchedCount > 0;
-  }
-
-  public async searchProfiles(
-    filters: FilterQuery<IUserProfile>,
-    options?: {
-      sort_by?: string;
-      sort_order?: 'asc' | 'desc';
-      limit?: number;
-      skip?: number;
-    }
-  ) {
-    const total = await this.model.countDocuments(filters);
-
-    let query = this.model.find(filters);
-    const sortField = options?.sort_by ?? 'createdAt';
-    const sortOrder = options?.sort_order === 'asc' ? 1 : -1;
-    query = query.sort({ [sortField]: sortOrder });
-
-    if (options?.skip !== undefined && options.skip >= 0) {
-      query = query.skip(options.skip);
-    }
-
-    if (options?.limit !== undefined && options.limit > 0) {
-      query = query.limit(options.limit);
-    }
-
-    const results = await query.exec();
-
-    return {
-      results,
-      extras: {
-        total,
-        limit: options?.limit,
-        skip: options?.skip
-      }
-    };
-  }
-
-  public async countUsers(status?: USER_ENTITY_STATUS): Promise<number> {
-    const query: FilterQuery<IUserProfile> = {};
-    if (status !== undefined) {
-      query.status = status;
-    }
-    return this.model.countDocuments(query);
+  public async updateUserById(id: string, update: UpdateFilter<IUser>): Promise<WithId<IUser>> {
+    const updatedUser = await userRepository.updateById(id, update);
+    if (!updatedUser) throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+    return updatedUser;
   }
 }
 

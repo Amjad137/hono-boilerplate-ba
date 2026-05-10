@@ -1,6 +1,6 @@
 import { AUDIT_ACTION, AUDIT_ENTITY_TYPE, AUDIT_STATUS } from '@/constants/audit-log.constants';
 import pkg from 'lodash';
-import { date, mixed, number, object, string } from 'yup';
+import { date, mixed, object, string } from 'yup';
 import { paginationQuerySchema } from '../common.schema';
 
 /**

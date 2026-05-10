@@ -1,4 +1,3 @@
-import app from '@/config/app.config';
 import connect from '@/config/db.config';
 import environment from '@/config/env.config';
 import { serve } from '@hono/node-server';
@@ -7,6 +6,9 @@ const startServer = async () => {
   try {
     console.log('🚀 Starting server on port:', process.env.PORT || environment.port);
     await connect();
+
+    // Nothing below this line is imported until connect() is done
+    const { default: app } = await import('@/config/app.config');
 
     // Use PORT from environment (Cloud Run) or fall back to config
     const port = process.env.PORT ? Number(process.env.PORT) : environment.port;

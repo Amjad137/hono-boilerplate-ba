@@ -1,6 +1,6 @@
+import environment from '@/config/env.config';
 import { SendEmailParams } from '@/config/resend/email.types';
 import { Resend } from 'resend';
-import environment from '../env.config';
 
 export const resend = new Resend(environment.resendApiKey);
 

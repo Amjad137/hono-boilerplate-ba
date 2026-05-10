@@ -1,18 +1,19 @@
 import { ORG_ROLES } from '@/constants/auth.constants';
 import { SYSTEM_ROLE } from '@/constants/user.constants';
+import { userRepository } from '@/Repositories/user.repository';
+import { sendEmail } from '@/services/email.service';
 import { betterAuth } from 'better-auth';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
-import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { APIError } from 'better-auth/api';
 import { admin, organization, username } from 'better-auth/plugins';
 import { getMongoClient, getMongoDb } from '../db.config';
 import environment from '../env.config';
-import { ac, manager, owner, staff } from './permissions';
-import { sendEmail } from '../resend';
 import { OrgInvitationEmail } from '../resend/templates/org-invitation.template';
-import userService from '@/services/user.service';
+import { ac, manager, owner, staff } from './permissions';
 
 export const auth = betterAuth({
   baseURL: environment.apiUrl,
+  basePath: 'v1/auth',
   secret: environment.betterAuthSecret,
 
   trustedOrigins: [environment.clientUrl],
@@ -99,7 +100,7 @@ export const auth = betterAuth({
       },
 
       sendInvitationEmail: async ({ email, id, organization, inviter }) => {
-        const existingUser = await userService.findOne({ email: email.toLowerCase() });
+        const existingUser = await userRepository.findByEmail(email.toLowerCase());
 
         const url = new URL(existingUser ? '/login' : '/signup', environment.clientUrl);
         url.searchParams.set('invitationId', id);

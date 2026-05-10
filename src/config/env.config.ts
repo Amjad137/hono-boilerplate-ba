@@ -20,7 +20,7 @@ const environment = {
 
   //Resend Configuration
   resendApiKey: process.env.RESEND_API_KEY as string,
-  resendFromEmail: process.env.FROM_EMAIL as string,
+  resendFromEmail: process.env.RESEND_FROM_EMAIL as string,
 
   // AWS S3 Configuration
   awsRegion: process.env.AWS_REGION as string,

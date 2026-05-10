@@ -17,7 +17,15 @@ export const userQuerySchema = paginationQuerySchema.concat(
     status: mixed<USER_ENTITY_STATUS>().oneOf(pkg.values(USER_ENTITY_STATUS)),
 
     // For admin queries - verified status
-    verified: boolean().transform((value, originalValue) => {
+    emailVerified: boolean().transform((value, originalValue) => {
+      if (typeof originalValue === 'string') {
+        if (originalValue.toLowerCase() === 'true') return true;
+        if (originalValue.toLowerCase() === 'false') return false;
+      }
+      return value;
+    }),
+
+    banned: boolean().transform((value, originalValue) => {
       if (typeof originalValue === 'string') {
         if (originalValue.toLowerCase() === 'true') return true;
         if (originalValue.toLowerCase() === 'false') return false;
@@ -28,5 +36,11 @@ export const userQuerySchema = paginationQuerySchema.concat(
 );
 
 export const userCountQuerySchema = object({
-  status: mixed<USER_ENTITY_STATUS>().oneOf(pkg.values(USER_ENTITY_STATUS))
+  banned: boolean().transform((value, originalValue) => {
+    if (typeof originalValue === 'string') {
+      if (originalValue.toLowerCase() === 'true') return true;
+      if (originalValue.toLowerCase() === 'false') return false;
+    }
+    return value;
+  })
 });

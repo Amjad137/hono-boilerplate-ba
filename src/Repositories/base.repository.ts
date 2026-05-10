@@ -11,7 +11,7 @@ import {
 import { ENTITY_SORT, ENTITY_STATUS } from '../constants/db.constants';
 import { BaseExtrasDTO } from '../dto/common.dto';
 
-export class CommonDatabaseService<T extends IBaseEntity, U extends Model<T>> {
+export class BaseRepository<T extends IBaseEntity, U extends Model<T>> {
   protected model: U;
 
   constructor(model: U) {
